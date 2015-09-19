@@ -1,0 +1,119 @@
+/*http://fonts.googleapis.com/css?family=Open+Sans:*/
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 400;
+	src: local('Open Sans'), local('OpenSans'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/cJZKeOuBrn4kERxqtaUH3T8E0i7KZn-EPnyo3HZu7kw.woff) format('woff');
+}
+
+* {
+	font-family: 'Open Sans', sans-serif;
+}
+html{
+	overflow-y:scroll
+}
+tr.odd {
+	background-color:#F9F9F9
+}
+tr.highlighted, .table-hover tbody tr:hover td {
+	background-color:#F0F0F0
+}
+td.highlighted {
+	background-color:#F0F0F0;
+	border-top: 0px solid #F0F0F0;
+}
+#week-table tr {
+	cursor:pointer
+}
+#week-table td {
+	text-align:center;
+}
+.menu li.dropdown:hover ul.dropdown-menu{
+	display:block;
+	margin-top:0px;
+}
+.menu .dropdown-menu {
+	position:fixed;
+}
+div.accordion td {
+	width:50%;
+}
+.container a:hover {
+	text-decoration: none;
+}
+td a:hover {
+	text-decoration: none;
+}
+form#eztv {
+	display:none;
+}
+input.number {
+	width:25px;
+	text-align: center;
+}
+tr.hiddenLate {
+	display:none;
+}
+div.one-third {
+	width:32%;
+	float:left;
+}
+textarea.note {
+	width: 45%;
+	height: 260px;
+	/* 130 165 */
+}
+div.showList li, div#notepadDiv, div#settingsDiv, div#commentsDiv, div#episodesDiv {
+	display:none;
+}
+span.label {
+	line-height: 16px;
+	font-weight: normal;
+}
+div.loading_wrap {
+	position:fixed;
+	height:100%;
+	width:100%;
+	overflow:hidden;
+	top:0;
+	left:0;
+	background-color: white;
+	z-index: 1000;
+/*	text-align: center;
+	vertical-align: middle;*/
+}
+div.loading_wrap div {
+	position: absolute;
+	width: 100%;
+	top: 40%;
+	text-align: center;
+	vertical-align: middle;
+}
+h4.hidden_only_one {
+	display: none;
+}
+tr.hRow {
+	display: none;
+}
+td.hCol {
+	display: none;
+}
+#week-table td {
+	padding: 0px;
+}
+#week-table td div {
+	width: 100%;height:100%;
+	padding: 8px;
+}
+span.tt {
+	color: black;
+}
+.panel-group .panel + .panel{
+    margin-top: 0;
+}
+div.control-group {
+	padding-left: 20px;
+}
+ul {
+	list-style-type: circle;
+}
