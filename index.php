@@ -41,7 +41,8 @@ $idShowArray = 0;
 
 $timer=microtime(true);
 
-$mysql = new mysqli("xxx", "xxx", "xxx", "xxx");
+require "config.php";
+$mysql = new mysqli($mysql_host, $mysql_user, $mysql_pass, $mysql_name);
 if ($mysql->connect_errno) {
     echo "error connecting to db";
     exit;
@@ -50,14 +51,14 @@ if ($mysql->connect_errno) {
 query("DELETE FROM users_tokens WHERE creation_date < date_sub(now(), interval 1 month)");
 
 $menu = ""; $menuC = ""; $script = ""; $page = ""; $ret = "";
-$gmt_diff = query("SELECT * FROM timezones WHERE id_timezone=1")->fetch_object()->gmt_diff;
+$gmt_diff = query("SELECT * FROM timezones WHERE id_timezone=10")->fetch_object()->gmt_diff;
 
 if (isset($argv[1])) {
 	$address = "//seriousseri.es/";
 	error_reporting(E_ALL);
 	ini_set('display_errors', 1);
 	if ($argv[1]=='cron') {
-		$result = query("SELECT * FROM shows ".(isset($argv[2]) ? " WHERE id_show=".$argv[2] : "ORDER BY last_update ASC LIMIT 0, 1"));
+		$result = query("SELECT * FROM shows WHERE id_show_tvmaze>0 ".(isset($argv[2]) ? " AND id_show=".$argv[2] : "ORDER BY last_update ASC LIMIT 0, 1"));
 		while ($row = $result->fetch_object()) {
 			if (!check($row))
 				echo "fail - ".$row->n_show.", ".date("G:i j-n-Y",time())."\n";
@@ -264,7 +265,7 @@ if ($user) {
 					}
 				break;
 			case "add show":
-				query("INSERT INTO shows (n_show, id_show_tvrage) VALUES ('".$postSlashes['n_show']."', '".$postSlashes['id_show_tvrage']."')");
+				query("INSERT INTO shows (n_show, id_show_tvmaze) VALUES ('".$postSlashes['n_show']."', '".$postSlashes['id_show_tvmaze']."')");
 				break;
 			case "comment":
 				$cTime = time();
@@ -364,7 +365,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 			$str = "nobody is watching this show :(";
 		}
 		$str.="<br />episodes: ".$row->no_eps.($row->no_eps_announced ? " + ".$row->no_eps_announced." announced" : "")."<br />1st episode ".str_replace("'", "\"", serviceLinks($row->n_search, 1, 1));
-		$str ="<label class='checkbox'><input type='checkbox' name='".$row->id_show.($row->id_user ? "' checked='checked" : "")."' class='show".$row->id_show."' /> <span class='tt' title='<a target=\"_blank\" href=\"http://www.tvrage.com/show/id-".$row->id_show_tvrage."\">info</a>' data-content='".$str."'>".$row->n_show.($userInfo->show_flags && $row->country ? " <img src='http://images.tvrage.com/flags/".strtolower(substr($row->country, 0, 2)).".gif' alt='".$row->country."' /> " : "").($row->canceled ? " <i class='glyphicon glyphicon-remove'></i>" : "")."</span></label>";
+		$str ="<label class='checkbox'><input type='checkbox' name='".$row->id_show.($row->id_user ? "' checked='checked" : "")."' class='show".$row->id_show."' /> <span class='tt' title='<a target=\"_blank\" href=\"http://www.tvmaze.com/shows/".$row->id_show_tvmaze."/s\">info</a>' data-content='".$str."'>".$row->n_show.($userInfo->show_flags && $row->country ? " <img src='http://images.tvrage.com/flags/".strtolower(substr($row->country, 0, 2)).".gif' alt='".$row->country."' /> " : "").($row->canceled ? " <i class='glyphicon glyphicon-remove'></i>" : "")."</span></label>";
 		if ($rows<$maxRows)
 	   	$retTemp1.=$str;
 		elseif ($rows<$maxRows*2)
@@ -381,8 +382,8 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 		$ret.="<div class='panel panel-default'><div class='panel-heading'><h4 class='panel-title'><a data-toggle='collapse' data-parent='#showAccordion' href='#collapseLast'>".$firstShow." - ".$lastShow."</a></h4></div><div id='collapseLast' class='panel-collapse collapse'><div class='panel-body'><div class='control-group'><div class='constrols one-third'>".$retTemp1."</div><div class='constrols one-third'>".$retTemp2."</div><div class='constrols one-third'>".$retTemp3."</div></div></div></div></div>";
 	if ($user==1) {
  		$ret.="<div class='panel panel-default'><div class='panel-heading'><h4 class='panel-title'><a data-toggle='collapse' data-parent='#showAccordion' href='#collapseAdd'>add show</a></h4></div><div id='collapseAdd' class='panel-collapse collapse'><div class='panel-body'>name:&nbsp;&nbsp;&nbsp;&nbsp;<input type='text' name='n_show' id='n_show' /><br />";
-	  $ret.="<a href='' onClick='this.href=\"//services.tvrage.com/feeds/search.php?show=\"+$(\"#n_show\").val()' target='_blank'>";
- 		$ret.="show id:</a><input type='text' name='id_show_tvrage' /><br /><input type='submit' value='add show' class='btn btn-success' onClick='$(\"#formTypeSettings\").val(\"add show\")' /></div></div>";
+	  $ret.="<a href='' onClick='this.href=\"//api.tvmaze.com/search/shows?q=\"+$(\"#n_show\").val()' target='_blank'>";
+ 		$ret.="show id:</a><input type='text' name='id_show_tvmaze' /><br /><input type='submit' value='add show' class='btn btn-success' onClick='$(\"#formTypeSettings\").val(\"add show\")' /></div></div>";
 	}
 	$ret.="</div></div><input type='hidden' name='formType' value='shows' id='formTypeSettings' /><input type='submit' value='save shows' class='btn btn-success' /></form>";
 	if ($user!=1) {
@@ -423,14 +424,14 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 	if ($showInfo->is_deleted) {
 		$ret.="You have stopped watching this show.<br /><form method='post' action=''><input type='hidden' name='id_show' value='".$showId."' /><input type='hidden' name='formType' value='show undelete' /><button type='submit' class='btn btn-success'><i class='glyphicon glyphicon-refresh icon-grey'></i> undelete</button></form>";
 	} else {
- 		$row = query("SELECT Min(If(shows_episodes.season=".($showInfo->c_season ? $showInfo->c_season : "0")." AND shows_episodes.episode=".($showInfo->c_episode ? $showInfo->c_episode : "0").",title,Null)) AS title, Min(If(shows_episodes.season=".($showInfo->c_season ? $showInfo->c_season : "0")." AND shows_episodes.episode=".($showInfo->c_episode ? $showInfo->c_episode : "0").",id_episode_tvrage,Null)) AS id_episode_tvrage".($showInfo->next_episode ? ", Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff=".$showInfo->next_episode.", shows_episodes.season, Null)) AS season, Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff=".$showInfo->next_episode.", title, Null)) AS title_next, Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff=".$showInfo->next_episode.", id_episode_tvrage, Null)) AS id_episode_tvrage_next, Sum(If($timeToComp<=shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff,1,0)) AS left_episodes, Sum(If(shows_episodes.season=".($showInfo->c_season ? $showInfo->c_season : "0")." AND $timeToComp<=shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff,1,0)) AS left_this_season" : "")." FROM (shows INNER JOIN shows_episodes ON shows.id_show = shows_episodes.id_show) INNER JOIN timezones ON shows.id_timezone = timezones.id_timezone WHERE shows.id_show = ".$showInfo->id_show." GROUP BY shows.id_show")->fetch_object();
+ 		$row = query("SELECT Min(If(shows_episodes.season=".($showInfo->c_season ? $showInfo->c_season : "0")." AND shows_episodes.episode=".($showInfo->c_episode ? $showInfo->c_episode : "0").",title,Null)) AS title, Min(If(shows_episodes.season=".($showInfo->c_season ? $showInfo->c_season : "0")." AND shows_episodes.episode=".($showInfo->c_episode ? $showInfo->c_episode : "0").",id_episode_tvmaze,Null)) AS id_episode_tvmaze".($showInfo->next_episode ? ", Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff=".$showInfo->next_episode.", shows_episodes.season, Null)) AS season, Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff=".$showInfo->next_episode.", title, Null)) AS title_next, Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff=".$showInfo->next_episode.", id_episode_tvmaze, Null)) AS id_episode_tvmaze_next, Sum(If($timeToComp<=shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff,1,0)) AS left_episodes, Sum(If(shows_episodes.season=".($showInfo->c_season ? $showInfo->c_season : "0")." AND $timeToComp<=shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff,1,0)) AS left_this_season" : "")." FROM (shows INNER JOIN shows_episodes ON shows.id_show = shows_episodes.id_show) INNER JOIN timezones ON shows.id_timezone = timezones.id_timezone WHERE shows.id_show = ".$showInfo->id_show." GROUP BY shows.id_show")->fetch_object();
  		$episodes = query("SELECT * FROM shows_episodes WHERE id_show = ".$showInfo->id_show.($showInfo->season || $showInfo->episode ? " AND (season>".$showInfo->season." OR (season=".$showInfo->season." AND episode>".$showInfo->episode.")) ORDER BY season, episode" : ""));
 		$special_episodes = query("SELECT * FROM shows_episodes_special WHERE id_show = ".$showInfo->id_show." ORDER BY date");
 //		$row = query("SELECT * FROM shows_episodes WHERE id_show = ".$showInfo->id_show." AND season = ".$showInfo->c_season." AND episode = ".$showInfo->c_episode)->fetch_object();
-		if ($showInfo->c_season) $title = " - \"<a href='http://tvrage.com/show/id-".$showInfo->id_show_tvrage."/episodes/".$row->id_episode_tvrage."' target='_blank'>".$row->title."</a>\""; else $title="";
- 		$ret.="<h2>".$showInfo->n_show."</h2>".$showInfo->full_status.", <a target='_blank' href='http://tvrage.com/show/id-".$showInfo->id_show_tvrage."'>more info</a><br /><br />newest season: ".$showInfo->c_season.", episode: ".$showInfo->c_episode.$title;
+		if ($showInfo->c_season) $title = " - \"<a href='http://www.tvmaze.com/episodes/".$row->id_episode_tvmaze."/d' target='_blank'>".$row->title."</a>\""; else $title="";
+ 		$ret.="<h2>".$showInfo->n_show."</h2>".$showInfo->full_status.", <a target='_blank' href='http://www.tvmaze.com/shows/".$showInfo->id_show_tvmaze."/d'>more info</a><br /><br />newest season: ".$showInfo->c_season.", episode: ".$showInfo->c_episode.$title;
  		if ($showInfo->next_episode) {
- 			$ret.="<br />next ".($showInfo->c_season==$row->season ? "episode" : "season").": ".date("j-n-Y H:i", $showInfo->next_episode-$showInfo->episode_length+$userInfo->gmt_diff)."-".date("H:i", $showInfo->next_episode+$userInfo->gmt_diff)." - \"<a href='http://tvrage.com/show/id-".$showInfo->id_show_tvrage."/episodes/".$row->id_episode_tvrage_next."' target='_blank'>".$row->title_next."\"</a><br />total announced episodes: ".$row->left_episodes.($row->left_this_season ? " (this season: ".$row->left_this_season.")" : "");
+ 			$ret.="<br />next ".($showInfo->c_season==$row->season ? "episode" : "season").": ".date("j-n-Y H:i", $showInfo->next_episode-$showInfo->episode_length+$userInfo->gmt_diff)."-".date("H:i", $showInfo->next_episode+$userInfo->gmt_diff)." - \"<a href='http://www.tvmaze.com/episodes/".$row->id_episode_tvmaze_next."/d' target='_blank'>".$row->title_next."\"</a><br />total announced episodes: ".$row->left_episodes.($row->left_this_season ? " (this season: ".$row->left_this_season.")" : "");
  		}
  		$ret.="<br /><form method='post' action='".$address."'> your season: <input type='text' name='season' id='season' value='".$showInfo->season."' autocomplete='off' class='number' />, episode: <input type='text' name='episode' id='episode' value='".$showInfo->episode."' autocomplete='off'  class='number' /><br /><br /><div>".
  				"<button type='submit' class='btn btn-success'><i class='glyphicon glyphicon-ok'></i> save</button>";
@@ -469,7 +470,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 			if ($lastSeason<$row->season) $ret.="<br />";
 			$ret.="Season ".substr("0".$row->season,-2)." Episode ".substr("0".$row->episode,-2)." (".date("d-m-Y", $row->date+$showInfo->ep_diff+$userInfo->gmt_diff)
 					.($row->season<$showInfo->c_season || ($row->season==$showInfo->c_season && $row->episode<=$showInfo->c_episode) ? ", <a href='#' onClick='return saveShow(".$row->season.", ".$row->episode.");'>viewed</a>".($showInfo->n_search=='DONT' ? "" : ", ").serviceLinks($showInfo->n_search, $row->season, $row->episode) : "")
-					."): <a href='http://tvrage.com/show/id-".$showInfo->id_show_tvrage."/episodes/".$row->id_episode_tvrage."' target='_blank'>".$row->title."</a><br />";
+					."): <a href='http://www.tvmaze.com/episodes/".$row->id_episode_tvmaze."/d' target='_blank'>".$row->title."</a><br />";
 			$lastSeason=$row->season;
 		}
 		$status = 0;
@@ -487,7 +488,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 				}
 			}
 			$ret.="Season ".substr("0".$row->season,-2)." (".date("d-m-Y", $row->date+$showInfo->ep_diff+$userInfo->gmt_diff)
-					."): <a href='http://tvrage.com/show/id-".$showInfo->id_show_tvrage."/episodes/".$row->id_episode_tvrage."' target='_blank'>".$row->title."</a><br />";
+					."): <a href='http://www.tvmaze.com/episodes/".$row->id_episode_tvmaze."/d' target='_blank'>".$row->title."</a><br />";
 		}
 		$ret.="</div><div id='commentsDiv'><br />";
  		$comments = false;
@@ -767,7 +768,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 				}
 			}
 		}
-		$list.=($row->canceled && $status!=6 ? " <i class='glyphicon glyphicon-remove'></i>" : "")."</a>".
+		$list.=($row->id_show_tvmaze==0 ? " <i class='glyphicon glyphicon-alert'></i>" : "").($row->canceled && $status!=6 ? " <i class='glyphicon glyphicon-remove'></i>" : "")."</a>".
 					(($status==2 || $status==4) && $row->new_episodes>1 ? " (".$row->new_episodes." episodes)" : "").
 					((($row->new_episodes==1 && $status < 3) || $status==3) && $userInfo->list_show_titles && $row->next_title ? " (".$row->next_title.")" : "").
 					"</li>";
@@ -804,7 +805,7 @@ if ($page!="logout" && $page!="logoutAndClear" && $user!=0) {
 
 function createShowArray($row) {
 global $idShowArray, $userInfo;
-	return "showArray[".$idShowArray++."]=[".$row->id_show.",".$row->id_show_tvrage.",".($row->new_episodes ? $row->new_episodes : 0).
+	return "showArray[".$idShowArray++."]=[".$row->id_show.",".$row->id_show_tvmaze.",".($row->new_episodes ? $row->new_episodes : 0).
 				",'".str_replace("&", "and", str_replace("'", "\\'", $row->n_search))."',".($row->c_season ? $row->c_season : 0).
 				",".($row->c_episode ? $row->c_episode : 0).",'".showNameForUrl($row->n_show)."', '".
 				substr("0".(floor(($row->episode_start+$userInfo->gmt_diff)/3600)%24),-2).":".substr("0".(floor(($row->episode_start+$userInfo->gmt_diff)/60)%60),-2)."-".
@@ -822,7 +823,7 @@ if (($page=='reload' || count($_POST)) && $user) {
 }
 
 if ($user==1) {
-	$last = query("SELECT Min(last_update) AS last_check FROM shows".($showId==0 ? "" : " WHERE id_show = ".$showId))->fetch_object()->last_check;
+	$last = query("SELECT Min(last_update) AS last_check FROM shows".($showId==0 ? " WHERE id_show_tvmaze>0" : " WHERE id_show = ".$showId))->fetch_object()->last_check;
 	$ret.=($last<time()-DAY ? "<h1>ERROR?</h1>" : "")."<!--last update: ".date("G:i j-n-Y", $last+$userInfo->gmt_diff)."<br />time generated: ".substr(microtime(true)-$timer, 0, 5)." sek<br />queries: ".$queryNum."--><!-- $debug -->";
 }
 echo "<!DOCTYPE html><html lang='en'><head><title>SeriousSeri.es".$pageTitle."</title><script>var showArray=new Array();var user_id=".$userInfo->id_user.";function drawCols(s,e){for(i=s;i<=e;i++)document.write(\"<td class='col col\"+i+\"'><div>&nbsp;</div></td>\");}</script>".
@@ -848,87 +849,64 @@ function showNameFromUrl($str) {
 }
 //SELECT replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(group_concat(n_show separator ''), 'a', ''), 'b', ''), 'c', ''), 'd', ''), 'e', ''), 'f', ''), 'g', ''), 'h', ''), 'i', ''), 'j', ''), 'k', ''), 'l', ''), 'm', ''), 'n', ''), 'o', ''), 'p', ''), 'q', ''), 'r', ''), 's', ''), 't', ''), 'u', ''), 'v', ''), 'w', ''), 'x', ''), 'y', ''), 'z', '') FROM `shows`
 function check($row) {
-exit;
 global $mysql;
 //	date_default_timezone_set('UTC');
 	try {
-		$canceled=0;$deleted=false;
-		$ctx  = stream_context_create(array('http' => array('timeout' => 1000)));
-		$info = file_get_contents("http://services.tvrage.com/feeds/full_show_info.php?sid=".$row->id_show_tvrage, 0, $ctx);
-		if ($info=='')
-			return false;
-		if (substr($info, 0, 4)=="User")
-			return false;
-		$xml  = new DOMDocument();$xml->loadXml($info);$deleted = false;
-		foreach ($xml->getElementsByTagName('Season') as $seasonNode) {
-			$season = $seasonNode->attributes->getNamedItem('no')->value;
-			foreach ($seasonNode->getElementsByTagName('episode') as $episodeNode) {
-				$episode   = $episodeNode->getElementsByTagName('seasonnum')->item(0)->textContent;
-				$airdate   = $episodeNode->getElementsByTagName('airdate')->item(0)->textContent;
-				$title     = $episodeNode->getElementsByTagName('title')->item(0)->textContent;
-				$id_episode= $episodeNode->getElementsByTagName('link')->item(0)->textContent;
-				$id_episode= substr($id_episode, strrpos($id_episode, "/")+1);
-				if (substr($airdate, -2)!="00") {
-					$time=strtotime($airdate);
-					if (!$deleted) {
-						query("DELETE FROM shows_episodes WHERE id_show=".$row->id_show);
-						$deleted=true;
-					}
-					query("INSERT INTO shows_episodes (id_show, season, episode, date, title, id_episode_tvrage) VALUES (".$row->id_show.", ".$season.", ".$episode.", ".$time.", '".addslashes($title)."', ".$id_episode.")");
+		$canceled=0;$deleted=false;$airtimeCount=0;
+		$info = json_decode(file_get_contents("http://api.tvmaze.com/shows/".$row->id_show_tvmaze));
+		$episodes = json_decode(file_get_contents("http://api.tvmaze.com/shows/".$row->id_show_tvmaze."/episodes?specials=1"));
+		foreach ($episodes as $episode) {
+			$season 	 = $episode->season;
+			$number    = $episode->number;
+			$airdate   = $episode->airdate;
+			$title     = $episode->name;
+			$id_episode= $episode->id;
+			$runtime   = $episode->runtime;
+			if ($airtimeCount == 0)
+				$airtime = $episode->airtime;
+			$airtimeCount += ($airtime == $episode->airtime ? 1 : -1);
+			if (substr($airdate, -2)!="00") {
+				$time=strtotime($airdate);
+				if (!$deleted) {
+					query("DELETE FROM shows_episodes WHERE id_show=".$row->id_show);
+					query("DELETE FROM shows_episodes_special WHERE id_show=".$row->id_show);
+					$deleted=true;
 				}
-			}
-		}
-		$deleted = false;
-		$specialEpisodes = $xml->getElementsByTagName('Special');
-		if ($specialEpisodes->length>0) {
-			foreach ($specialEpisodes->item(0)->getElementsByTagName('episode') as $specialEpisode) {
-				$season    = $specialEpisode->getElementsByTagName('season')->item(0)->textContent;
-				$airdate   = $specialEpisode->getElementsByTagName('airdate')->item(0)->textContent;
-				$runtime = $specialEpisode->getElementsByTagName('runtime');
-				if ($runtime->length == 0)
-					$runtime = 0;
+				if ($number)
+					query("INSERT INTO shows_episodes (id_show, season, episode, date, title, id_episode_tvmaze) VALUES (".$row->id_show.", ".$season.", ".$number.", ".$time.", '".addslashes($title)."', ".$id_episode.")");
 				else
-					$runtime = $runtime->item(0)->textContent;
-				$title     = $specialEpisode->getElementsByTagName('title')->item(0)->textContent;
-				$id_episode= $specialEpisode->getElementsByTagName('link')->item(0)->textContent;
-				$id_episode= substr($id_episode, strrpos($id_episode, "/")+1);
-				if (substr($airdate, -2)!="00") {
-					$time=strtotime($airdate);
-					if (!$deleted) {
-						query("DELETE FROM shows_episodes_special WHERE id_show=".$row->id_show);
-						$deleted=true;
-					}
-					query("INSERT INTO shows_episodes_special (id_show, season, date, runtime, title, id_episode_tvrage) VALUES (".$row->id_show.", ".$season.", ".$time.", ".$runtime.", '".addslashes($title)."', ".$id_episode.")");
-				}
+					query("INSERT INTO shows_episodes_special (id_show, season, date, runtime, title, id_episode_tvmaze) VALUES (".$row->id_show.", ".$season.", ".$time.", ".$runtime.", '".addslashes($title)."', ".$id_episode.")");
 			}
 		}
-		$name     = strtolower($xml->getElementsByTagName('name')->item(0)->textContent);
-		$status   = strtolower($xml->getElementsByTagName('status')->item(0)->textContent);
-		if ($status == "canceled/ended" || $status == "ended" || $status == "canceled" || $status == "pilot rejected")
+		$name     = strtolower($info->name);
+		echo $name."\n";
+		$status   = strtolower($info->status);
+		if ($status == "ended") // || $status == "canceled/ended" || $status == "canceled" || $status == "pilot rejected")
 			$canceled = 1;
-		elseif ($status == "returning series" || $status == "in development" || $status == "tpb/on the bubble" || $status == "tbd/on the bubble" || $status == "new series" || $status == "pilot ordered" || $status == "on hiatus" || $status == "final season")
+		elseif ($status == "running" || $status == "to be determined") // "returning series" || $status == "in development" || $status == "tpb/on the bubble" || $status == "tbd/on the bubble" || $status == "new series" || $status == "pilot ordered" || $status == "on hiatus" || $status == "final season")
 			$canceled = 0;
 		else {
 			echo "unknown status: '".$status."'. contact kuba.\n";
 			return false;
 		}
-		$airtime = $xml->getElementsByTagName('airtime');
-		$runtime = $xml->getElementsByTagName('runtime');
-		$network = $xml->getElementsByTagName('network');
-		$country = $xml->getElementsByTagName('origin_country');
-		$airtime = preg_split("/:/", $airtime->item(0)->textContent);
-		$airtime = 60*(60*$airtime[0]+$airtime[1]);
-		$runtime = ($runtime->length>0 ? $runtime->item(0)->textContent : 0)*60;
-		$network = ($network->length>0 ? $network->item(0)->textContent : "");
-		$country = ($country->length>0 ? $country->item(0)->textContent : "");
-		$timezone= addslashes($xml->getElementsByTagName('timezone')->item(0)->textContent);
+		$runtime = $info->runtime*60;
+		$network = $info->network->name;
+		$country = $info->network->country->code;
+		if ($airtime) {
+			$airtime = preg_split("/:/", $airtime);
+			$airtime = 60*(60*$airtime[0]+$airtime[1]);
+		} else {
+			$airtime = 0;
+		}
+		$timezone= $info->network->country->timezone;
 		$timezoneid = query("SELECT * FROM timezones WHERE n_timezone = '".$timezone."'")->fetch_object();
 		if (!$timezoneid) {
 			query("INSERT INTO timezones (n_timezone) VALUES ('".$timezone."')");
 			$timezoneid = query("SELECT * FROM timezones WHERE n_timezone = '".$timezone."'")->fetch_object();
 		}
-		$timezone = $timezoneid->id_timezone;
-		query("UPDATE shows SET last_update = ".time().", canceled=".$canceled.", full_status='".$status."', n_tvrage='".addslashes($name).($row->n_search ? "" : "', n_search='".addslashes($name))."', airtime=".$airtime.", runtime=".$runtime.", id_timezone=".$timezone.", country='".$country."', network='".$network."' WHERE id_show=".$row->id_show);
+		$timezoneid = $timezoneid->id_timezone;
+		if ($timezone) query("UPDATE timezones SET gmt_diff = ".(new DateTimeZone($timezone))->getOffset(new DateTime())." WHERE id_timezone = ".$timezoneid);
+		query("UPDATE shows SET last_update = ".time().", canceled=".$canceled.", full_status='".$status."', n_tvmaze='".addslashes($name).($row->n_search ? "" : "', n_search='".addslashes($name))."', airtime=".$airtime.", runtime=".$runtime.", id_timezone=".$timezoneid.", country='".$country."', network='".$network."' WHERE id_show=".$row->id_show);
 		return true;
 	} catch(Exception $e) {
 //		var_dump($e);
@@ -943,7 +921,7 @@ global $newEpisodesSQL, $isForLaterSQL, $showInfoSQL, $userEpisodesSQL, $queryFo
 	$timeToComp      = ($time ? $time-$userInfo->gmt_diff : time()-$gmt_diff);
 	$newEpisodesSQL  = "Sum(If((users_shows.season<shows_episodes.season OR (users_shows.season=shows_episodes.season AND users_shows.episode<shows_episodes.episode) OR users_shows.season Is Null OR users_shows.episode Is Null) AND shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,1,0))";
 	$isForLaterSQL   = "(users_shows.is_for_later OR (users_shows.is_full_season AND users_shows.season+2>IfNull(Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,Null,shows_episodes.season)),0) AND (users_shows.season+1<>Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,shows_episodes.season,Null)) OR IfNull(Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,Null,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff)),-1)<>-1)))";
-	$showInfoSQL     = "shows.n_show, shows.country, shows.airtime+shows.runtime-timezones.gmt_diff AS ep_diff, If(users_shows.show_links, shows.n_search, 'DONT') AS n_search, shows.id_show_tvrage, shows.canceled, shows.full_status, users_shows.*, $isForLaterSQL AS real_for_later, $newEpisodesSQL AS new_episodes, Sum(If(users_shows.season=shows_episodes.season AND users_shows.episode<shows_episodes.episode,1,0)) AS left_episodes, Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp OR shows_episodes.season*1000+shows_episodes.episode<=users_shows.season*1000+users_shows.episode,Null,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff)) AS next_episode, shows.airtime-timezones.gmt_diff AS episode_start, shows.runtime AS episode_length, If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,-1,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff) AS date, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff,Null)) AS last_episode, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,1000*shows_episodes.season+shows_episodes.episode,Null)) DIV 1000 AS c_season, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,1000*shows_episodes.season+shows_episodes.episode,Null)) MOD 1000 AS c_episode, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff>".$timeToComp.",Null,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff)) AS prev_episode";
+	$showInfoSQL     = "shows.n_show, shows.country, shows.airtime+shows.runtime-timezones.gmt_diff AS ep_diff, If(users_shows.show_links, shows.n_search, 'DONT') AS n_search, shows.id_show_tvmaze, shows.canceled, shows.full_status, users_shows.*, $isForLaterSQL AS real_for_later, $newEpisodesSQL AS new_episodes, Sum(If(users_shows.season=shows_episodes.season AND users_shows.episode<shows_episodes.episode,1,0)) AS left_episodes, Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp OR shows_episodes.season*1000+shows_episodes.episode<=users_shows.season*1000+users_shows.episode,Null,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff)) AS next_episode, shows.airtime-timezones.gmt_diff AS episode_start, shows.runtime AS episode_length, If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,-1,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff) AS date, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff,Null)) AS last_episode, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,1000*shows_episodes.season+shows_episodes.episode,Null)) DIV 1000 AS c_season, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,1000*shows_episodes.season+shows_episodes.episode,Null)) MOD 1000 AS c_episode, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff>".$timeToComp.",Null,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff)) AS prev_episode";
 	$userEpisodesSQL = "SELECT $showInfoSQL, new_comments.new_comments, sum(1) AS no_of_eps, group_concat(shows_episodes.title order by shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff, shows_episodes.season, shows_episodes.episode separator '; ') as title, If($newEpisodesSQL=0 And Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp OR shows_episodes.season*1000+shows_episodes.episode<=users_shows.season*1000+users_shows.episode,Null,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff)) Is Null,'',(SELECT title FROM shows_episodes s WHERE s.id_show = shows.id_show AND 1000*s.season+s.episode > 1000*IfNull(users_shows.season,0)+IfNull(users_shows.episode,0) ORDER BY date LIMIT 1)) AS next_title FROM (((users_shows INNER JOIN shows ON users_shows.id_show = shows.id_show) LEFT JOIN shows_episodes ON users_shows.id_show = shows_episodes.id_show) INNER JOIN timezones ON shows.id_timezone = timezones.id_timezone) LEFT JOIN (SELECT users_shows.id_show, count(*) AS new_comments FROM comments_unread INNER JOIN comments ON comments_unread.id_comment = comments.id_comment INNER JOIN users_shows ON comments_unread.id_user = users_shows.id_user AND comments.id_show = users_shows.id_show AND users_shows.season*1000+users_shows.episode>=comments.season*1000+comments.episode WHERE users_shows.id_user = ".$userInfo->id_user." GROUP BY users_shows.id_show) AS new_comments ON shows.id_show = new_comments.id_show ";
 	$queryForMailSQL = "SELECT shows.n_show, If(users_shows.show_links, shows.n_search, 'DONT') AS n_search, shows_episodes.* FROM ((users_shows INNER JOIN shows ON users_shows.id_show = shows.id_show) INNER JOIN shows_episodes ON users_shows.id_show = shows_episodes.id_show) INNER JOIN timezones ON shows.id_timezone = timezones.id_timezone WHERE NOT users_shows.is_deleted AND NOT is_for_later AND NOT is_full_season AND shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp AND 1000*shows_episodes.season+shows_episodes.episode>1000*IfNull(users_shows.season,0)+IfNull(users_shows.episode,0) AND users_shows.id_user = ";
 }
