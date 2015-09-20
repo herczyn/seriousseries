@@ -51,7 +51,6 @@ if ($mysql->connect_errno) {
 query("DELETE FROM users_tokens WHERE creation_date < date_sub(now(), interval 1 month)");
 
 $menu = ""; $menuC = ""; $script = ""; $page = ""; $ret = "";
-$gmt_diff = query("SELECT * FROM timezones WHERE id_timezone=10")->fetch_object()->gmt_diff;
 
 if (isset($argv[1])) {
 	$address = "//seriousseri.es/";
@@ -916,9 +915,9 @@ global $mysql;
 }
 
 function setQueries($time = 0) {
-global $newEpisodesSQL, $isForLaterSQL, $showInfoSQL, $userEpisodesSQL, $queryForMailSQL, $timeToComp, $userInfo, $gmt_diff;
+global $newEpisodesSQL, $isForLaterSQL, $showInfoSQL, $userEpisodesSQL, $queryForMailSQL, $timeToComp, $userInfo;
 //	if (!$time)$time = time();
-	$timeToComp      = ($time ? $time-$userInfo->gmt_diff : time()-$gmt_diff);
+	$timeToComp      = ($time ? $time : time())-$userInfo->gmt_diff;
 	$newEpisodesSQL  = "Sum(If((users_shows.season<shows_episodes.season OR (users_shows.season=shows_episodes.season AND users_shows.episode<shows_episodes.episode) OR users_shows.season Is Null OR users_shows.episode Is Null) AND shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,1,0))";
 	$isForLaterSQL   = "(users_shows.is_for_later OR (users_shows.is_full_season AND users_shows.season+2>IfNull(Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,Null,shows_episodes.season)),0) AND (users_shows.season+1<>Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,shows_episodes.season,Null)) OR IfNull(Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,Null,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff)),-1)<>-1)))";
 	$showInfoSQL     = "shows.n_show, shows.country, shows.airtime+shows.runtime-timezones.gmt_diff AS ep_diff, If(users_shows.show_links, shows.n_search, 'DONT') AS n_search, shows.id_show_tvmaze, shows.canceled, shows.full_status, users_shows.*, $isForLaterSQL AS real_for_later, $newEpisodesSQL AS new_episodes, Sum(If(users_shows.season=shows_episodes.season AND users_shows.episode<shows_episodes.episode,1,0)) AS left_episodes, Min(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp OR shows_episodes.season*1000+shows_episodes.episode<=users_shows.season*1000+users_shows.episode,Null,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff)) AS next_episode, shows.airtime-timezones.gmt_diff AS episode_start, shows.runtime AS episode_length, If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,-1,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff) AS date, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff,Null)) AS last_episode, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,1000*shows_episodes.season+shows_episodes.episode,Null)) DIV 1000 AS c_season, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff<$timeToComp,1000*shows_episodes.season+shows_episodes.episode,Null)) MOD 1000 AS c_episode, Max(If(shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff>".$timeToComp.",Null,shows_episodes.date+shows.airtime+shows.runtime-timezones.gmt_diff)) AS prev_episode";
