@@ -365,7 +365,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 			$str = "nobody is watching this show :(";
 		}
 		$str.="<br />episodes: ".$row->no_eps.($row->no_eps_announced ? " + ".$row->no_eps_announced." announced" : "")."<br />1st episode ".str_replace("'", "\"", serviceLinks($row->n_search, 1, 1));
-		$str ="<label class='checkbox'><input type='checkbox' name='".$row->id_show.($row->id_user ? "' checked='checked" : "")."' class='show".$row->id_show."' /> <span class='tt' title='<a target=\"_blank\" href=\"http://www.tvmaze.com/shows/".$row->id_show_tvmaze."/s\">info</a>' data-content='".$str."'>".$row->n_show.($userInfo->show_flags && $row->country ? " <img src='http://images.tvrage.com/flags/".strtolower(substr($row->country, 0, 2)).".gif' alt='".$row->country."' /> " : "").($row->canceled ? " <i class='glyphicon glyphicon-remove'></i>" : "")."</span></label>";
+		$str ="<label class='checkbox'><input type='checkbox' name='".$row->id_show.($row->id_user ? "' checked='checked" : "")."' class='show".$row->id_show."' /> <span class='tt' title='<a target=\"_blank\" href=\"http://www.tvmaze.com/shows/".$row->id_show_tvmaze."/s\">info</a>' data-content='".$str."'>".$row->n_show.($userInfo->show_flags && $row->country ? " <img src='".$cdnaddress."flags/".strtolower(substr($row->country, 0, 2)).".png' alt='".$row->country."' /> " : "").($row->canceled ? " <i class='glyphicon glyphicon-remove'></i>" : "")."</span></label>";
 		if ($rows<$maxRows)
 	   	$retTemp1.=$str;
 		elseif ($rows<$maxRows*2)
@@ -631,7 +631,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 				($row->new_episodes>1 && (isset($_COOKIE['waiting']) ? $_COOKIE['waiting'] : 'on') == 'off' ? "hRow " : "")).($class ? substr($class, 1) : "").
 				"' ".($user ? "onClick='window.location=\"".$address.showNameForUrl($row->n_show)."\"'" : "").
 				"><td style='text-align:center;white-space:nowrap'><div><a href='".($user ? $address.showNameForUrl($row->n_show) : "")."'>".
-				$row->n_show.($userInfo->show_flags && $row->country ? " <img src='http://images.tvrage.com/flags/".strtolower(substr($row->country, 0, 2)).".gif' alt='".$row->country."' /> " : "").($userInfo->week_labels_left ? getLabels($row) : "")."</a></div></td>";
+				$row->n_show.($userInfo->show_flags && $row->country ? " <img src='".$cdnaddress."flags/".strtolower(substr($row->country, 0, 2)).".png' alt='".$row->country."' /> " : "").($userInfo->week_labels_left ? getLabels($row) : "")."</a></div></td>";
 			$script.=createShowArray($row);
 			$col = 0;
 			$show=$row->id_show;
@@ -754,7 +754,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 					($row->next_episode && !$row->new_episodes ? date("d.m".($row->next_episode>$timeToComp+300*DAY ? ".Y" : ""), $row->next_episode+$userInfo->gmt_diff).
 					($row->next_episode<$timeToComp+$userInfo->list_days*DAY ? ", ".substr(date("l", $row->next_episode+$userInfo->gmt_diff),0,100) : "").": " : "").
 					($status==6 ? ($row->last_episode ? date("d.m.Y", $row->last_episode+$userInfo->gmt_diff) : "never aired").": " : "").
-					"<a href='".($user ? $address.showNameForUrl($row->n_show) : "")."' id='showL".$row->id_show."'>".$row->n_show.($userInfo->show_flags && $row->country ? " <img src='http://images.tvrage.com/flags/".strtolower(substr($row->country, 0, 2)).".gif' alt='".$row->country."' /> " : "").($user ? getLabels($row) : "");
+					"<a href='".($user ? $address.showNameForUrl($row->n_show) : "")."' id='showL".$row->id_show."'>".$row->n_show.($userInfo->show_flags && $row->country ? " <img src='".$cdnaddress."flags/".strtolower(substr($row->country, 0, 2)).".png' alt='".$row->country."' /> " : "").($user ? getLabels($row) : "");
 		$newComments[0] += $row->new_comments;
 		$newComments[$status] += $row->new_comments;
 		if ($userInfo->list_show_last_episode && !$row->canceled && $status<5 && (!$row->next_episode || ($row->left_episodes ? $row->left_episodes : 0)==1)) {
