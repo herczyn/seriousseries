@@ -878,11 +878,11 @@ global $mysql;
 			}
 		}
 		$name     = strtolower($info->name);
-		echo $name."\n";
+		//echo $name."\n";
 		$status   = strtolower($info->status);
 		if ($status == "ended") // || $status == "canceled/ended" || $status == "canceled" || $status == "pilot rejected")
 			$canceled = 1;
-		elseif ($status == "running" || $status == "to be determined") // "returning series" || $status == "in development" || $status == "tpb/on the bubble" || $status == "tbd/on the bubble" || $status == "new series" || $status == "pilot ordered" || $status == "on hiatus" || $status == "final season")
+		elseif ($status == "running" || $status == "to be determined" || "in development") // "returning series" || $status == "in development" || $status == "tpb/on the bubble" || $status == "tbd/on the bubble" || $status == "new series" || $status == "pilot ordered" || $status == "on hiatus" || $status == "final season")
 			$canceled = 0;
 		else {
 			echo "unknown status: '".$status."'. contact kuba.\n";
