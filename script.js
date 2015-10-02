@@ -30,7 +30,7 @@ function popovers() {
 		if (show_info != undefined) {
 			if (!show_info[2])
 				popup_text+=show_info[7]+", ";
-			popup_text+= "<a target='_blank' href='//www.tvrage.com/show/id-"+show_info[1]+"'>info</a>";
+			popup_text+= "<a target='_blank' href='//www.tvmaze.com/shows/"+show_info[1]+"/d'>info</a>";
 			if (show_info[2] && user_id) {
 				popup_text += ", <a href='/update/"+show_info[6]+"/'"+(show_info[2]==1 ? "" : " onClick='return confirm(\"Are you sure you want to set all "+show_info[2]+" episodes as watched?\")'")+">viewed</a>";
 				if (show_info[3]!='DONT') {
