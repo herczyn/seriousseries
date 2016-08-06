@@ -1,0 +1,18 @@
+AddType application/x-httpd-php55 .php
+
+RewriteEngine on
+
+RewriteCond %{HTTP_HOST} ^cdn\.seriousseri\.es$ [NC]
+RewriteRule ^.+$ - [L]
+
+#RewriteCond %{REQUEST_URI} ^/.well.+$ [NC]
+#RewriteRule ^.+$ - [L]
+
+RewriteCond %{HTTP_HOST} ^test\.seriousseri\.es$ [NC]
+RewriteRule ^.+$ test/index.php [L]
+
+RewriteCond %{HTTP_HOST} ^rest\.seriousseri\.es$ [NC]
+RewriteRule ^.+$ rest.php [L]
+
+RewriteRule ^.+$ index.php [L]
+
