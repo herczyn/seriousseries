@@ -22,6 +22,7 @@ const BIG_NUMBER_3 = 30000000000;
 $services = [
 //	'kat' => ['name'=>'kat',      'link'=>'https://kickass.to/usearch/$name$ S$season0$E$episode0$/?field=seeders&amp;sorder=desc'],
 	'tpb' => ['name'=>'tpb',      'link'=>'https://thepiratebay.se/search/$name$ S$season0$E$episode0$/0/7/0'],
+	'tpm' => ['name'=>'tpm',      'link'=>'https://thepiratebay.se/search/$name$ S$season0$E$episode0$/0/0/1'],
 	'tpr' => ['name'=>'tpr',      'link'=>'https://thepiratebay.lu/search/$name$ S$season0$E$episode0$/0/7/0'],
 	'iso' => ['name'=>'isohunt',  'link'=>'http://isohunt.to/torrents/?ihq=$name$ S$season0$E$episode0$?iht=-1&amp;ihp=1&amp;ihs1=1&amp;iho1=d'],
 	'add' => ['name'=>'addic7ed', 'link'=>'http://www.addic7ed.com/search.php?search=$name$ S$season0$E$episode0$'],
