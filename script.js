@@ -96,9 +96,11 @@ $(function() {
 	});
 	$('input[type=checkbox]').click(function() {
 		c = this.checked;
-		$('input[type=checkbox].' + this.className).each(function(){
-			this.checked = c;
-		});
+		if (this.className) {
+			$('input[type=checkbox].' + this.className).each(function(){
+				this.checked = c;
+			});
+		}
 	});
 	$(window).keydown(function(e) {
 		if (e.which == 17)
