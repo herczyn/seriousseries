@@ -252,7 +252,7 @@ if ($user) {
 				else
 					$ical_key="";
 				query("UPDATE users SET email_address='".$postSlashes['email_address']."', email_auto_update=".(isset($postSlashes['email_auto_update']) ? "1" : "0").", email_only_new=".(isset($postSlashes['email_only_new']) ? "1" : "0").
-					", list_days='".$postSlashes['list_days']."', list_day_margin='".$postSlashes['list_day_margin']."', list_show_titles=".(isset($postSlashes['list_show_titles']) ? "1" : "0").", list_sort_waiting_by_episodes_no=".(isset($postSlashes['list_sort_waiting_by_episodes_no']) ? "1" : "0").", list_show_last_episode=".(isset($postSlashes['list_show_last_episode']) ? "1" : "0").", show_week=".(isset($postSlashes['show_week']) ? "1" : "0").", week_new_limit='".$postSlashes['week_new_limit'].
+					", list_days='".$postSlashes['list_days']."', list_day_margin='".$postSlashes['list_day_margin']."', list_show_titles=".(isset($postSlashes['list_show_titles']) ? "1" : "0").", show_multilinks=".(isset($postSlashes['show_multilinks']) ? "1" : "0").", list_sort_waiting_by_episodes_no=".(isset($postSlashes['list_sort_waiting_by_episodes_no']) ? "1" : "0").", list_show_last_episode=".(isset($postSlashes['list_show_last_episode']) ? "1" : "0").", show_week=".(isset($postSlashes['show_week']) ? "1" : "0").", week_new_limit='".$postSlashes['week_new_limit'].
 					"', week_show_titles='".$postSlashes['week_show_titles']."', week_labels_left=".(isset($postSlashes['week_labels_left']) ? "1" : "0").", week_labels_top=".(isset($postSlashes['week_labels_top']) ? "1" : "0").
 					", week_labels_center=".(isset($postSlashes['week_labels_center']) ? "1" : "0").", week_hide_cols=".(isset($postSlashes['week_hide_cols']) ? "1" : "0").
 					", ical_key = '".$ical_key."', ical_only_first_episode = ".(isset($postSlashes['ical_only_first_episode']) ? "1" : "0").", ical_hours = ".(isset($postSlashes['ical_hours']) ? "1" : "0").", services_off='".$servicesOff."', show_flags=".(isset($postSlashes['show_flags']) ? "1" : "0")." WHERE id_user = ".$user);
@@ -399,6 +399,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 	$ret.="</div></div></div><div class='panel panel-default'><div class='panel-heading'><h4 class='panel-title'><a data-toggle='collapse' data-parent='#settingsAccordion' href='#collapseList'>list view</a></h4></div><div id='collapseList' class='panel-collapse collapse'><div class='panel-body'>";
 	$ret.="<table class='table table-striped'><thead><tr><td>number of days with weekday</td><td><input name='list_days' value='".$userInfo->list_days."' class='number' /></td></tr></thead>";
 	$ret.="<tr><td>show titles</td><td><input type='checkbox' name='list_show_titles' ".($userInfo->list_show_titles ? "checked='checked'" : "")." /></td></tr><tr><td>space between days</td><td><input type='text' name='list_day_margin' value='".$userInfo->list_day_margin."' class='number' /> pixels</td></tr>";
+	$ret.="<tr><td>show multilinks</td><td><input type='checkbox' name='show_multilinks' ".($userInfo->show_multilinks ? "checked='checked'" : "")." /></td></tr>";
 	$ret.="<tr><td>show <i class='glyphicon glyphicon-step-forward'></i> if last episode of season (might not always work)</td><td><input type='checkbox' name='list_show_last_episode' ".($userInfo->list_show_last_episode ? "checked='checked'" : "")." /></td></tr>";
 	$ret.="<tr><td>sort waiting shows by no of episodes left</td><td><input type='checkbox' name='list_sort_waiting_by_episodes_no' ".($userInfo->list_sort_waiting_by_episodes_no ? "checked='checked'" : "")." /></td></tr></table>";
 	$ret.="</div></div></div><div class='panel panel-default'><div class='panel-heading'><h4 class='panel-title'><a data-toggle='collapse' data-parent='#settingsAccordion' href='#collapseWeek'>week view</a></h4></div><div id='collapseWeek' class='panel-collapse collapse'><div class='panel-body'>";
@@ -724,7 +725,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
 	while ($row = $result->fetch_object()) {
 		if ($status<=1 && $row->new_episodes==1 && !$row->is_hidden_from_brand_new) {
 			if ($status<1)
-				$list.="<div><h4>brand new shows:</h4>".($user ? "<h5 id='brand_new'>&nbsp;</h5>" : "")."<ul>";
+				$list.="<div><h4>brand new shows:</h4>".($user && $userInfo->show_multilinks ? "<h5 id='brand_new'>&nbsp;</h5>" : "")."<ul>";
 			$status=1;
 		} else if ($status<=4 && $row->real_for_later) {
 			if ($status>0 && $status<4) $list.="</ul></div>";
