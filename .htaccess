@@ -1,5 +1,3 @@
-AddType application/x-httpd-php56 .php
-
 RewriteEngine on
 
 RewriteCond %{HTTP_HOST} ^cdn\.seriousseri\.es$ [NC]

@@ -157,6 +157,7 @@ $(function() {
 	checkOnlyOne();
 	showHideCR();
 	setTimeout("popovers()",100);
+	setTypeClasses();
 });
 
 function showHide(d){
@@ -294,4 +295,23 @@ function saveShow(season, episode) {
 	$('#episode').val(episode);
 	$("form")[0].submit();
 	return false;
+}
+
+function setTypeClasses() {
+	['heart', 'star', 'glass', 'music', 'repeat', 'home'].forEach(function(type){
+		$('.container ul li').each(function(a, b) {
+			if ($(b).find('.glyphicon-' + type).length) {
+				$(b).addClass('has-' + type);
+				$(b.parentElement.parentElement).addClass('has-' + type);
+			} else {
+				$(b).addClass('has-no-' + type);
+				$(b.parentElement.parentElement).addClass('has-no-' + type);
+			}
+		})
+	});
+}
+
+function showHideTypeClasses() {
+	$('.typeHide').removeClass('typeHide');
+	
 }
