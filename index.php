@@ -512,7 +512,7 @@ if (($page=='logout' || $page=='logoutAndClear') && $user!=0) {
  		if ($showInfo->logins!="")
  			$ret.="<h6>Other people watching this show:</h6>".str_replace(" (s00e00)", "", str_replace("s".substr('0'.$showInfo->c_season, -2)."e".substr('0'.$showInfo->c_episode, -2), "current", $showInfo->logins));
  		$ret.="</div>";
- 		$script.="showTab('".($showInfo->note!='' ? "notepad" : ($epsToWatch ? "episodes" : ($comments ? "comments" : "")))."');"; //episodes
+ 		$script.="showTab('".($epsToWatch ? "episodes" : ($comments ? "comments" : ""))."');"; //episodes
  	}
 } else if ($page=='backup' && $user!=0) {
 	header("Content-type: application/csv");
