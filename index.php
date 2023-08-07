@@ -61,9 +61,11 @@ if (isset($argv[1])) {
 	ini_set('display_errors', 1);
 	if ($argv[1]=='cron') {
 		$result = query("SELECT * FROM shows WHERE id_show_tvmaze>0 ".(isset($argv[2]) ? " AND id_show=".$argv[2] : "ORDER BY last_update ASC LIMIT 0, 1"));
-		while ($row = $result->fetch_object()) {
+		if ($row = $result->fetch_object()) {
 			if (!check($row))
 				echo "fail - ".$row->n_show.", ".date("G:i j-n-Y",time())."\n";
+			else
+				echo "success - ".$row->n_show.", ".date("G:i j-n-Y",time())."\n";
 		}
 	}
 	if ($argv[1]=='info') {
@@ -831,7 +833,7 @@ if (($page=='reload' || count($_POST)) && $user) {
 
 if ($user==1) {
 	$last = query("SELECT Min(last_update) AS last_check FROM shows".($showId==0 ? " WHERE id_show_tvmaze>0" : " WHERE id_show = ".$showId))->fetch_object()->last_check;
-	$ret.=($last<time()-DAY ? "<h1>ERROR?</h1>" : "")."<!--last update: ".date("G:i j-n-Y", $last+$userInfo->gmt_diff)."<br />time generated: ".substr(microtime(true)-$timer, 0, 5)." sek<br />queries: ".$queryNum."--><!-- $debug -->";
+	$ret.=($last<time()-DAY ? "<h1>ERROR? ".date("G:i j-n-Y", $last+$userInfo->gmt_diff)."</h1>" : "")."<!--last update: ".date("G:i j-n-Y", $last+$userInfo->gmt_diff)."<br />time generated: ".substr(microtime(true)-$timer, 0, 5)." sek<br />queries: ".$queryNum."--><!-- $debug -->";
 }
 echo "<!DOCTYPE html><html lang='en'><head><title>SeriousSeri.es".$pageTitle."</title><script>var showArray=new Array();var user_id=".$userInfo->id_user.";function drawCols(s,e){for(i=s;i<=e;i++)document.write(\"<td class='col col\"+i+\"'><div>&nbsp;</div></td>\");}</script>".
 "<link rel='shortcut icon' href='".$cdnaddress."favicon.ico' type='image/x-icon' /><meta charset='utf-8' /><meta name='viewport' content='width=device-width, initial-scale=1.0' />".
@@ -868,11 +870,11 @@ global $mysql;
 			$airdate   = $episode->airdate;
 			$title     = $episode->name;
 			$id_episode= $episode->id;
-			$runtime   = $episode->runtime;
+			$runtime   = $episode->runtime ? $episode->runtime : 0;
 			if ($airtimeCount == 0)
 				$airtime = $episode->airtime;
 			$airtimeCount += ($airtime == $episode->airtime ? 1 : -1);
-			if (substr($airdate, -2)!="00") {
+			if ($airdate!="" && substr($airdate, -2)!="00") {
 				$time=strtotime($airdate);
 				if (!$deleted) {
 					query("DELETE FROM shows_episodes WHERE id_show=".$row->id_show);
@@ -897,15 +899,15 @@ global $mysql;
 			return false;
 		}
 		$runtime = $info->runtime*60;
-		$network = $info->network->name;
-		$country = $info->network->country->code;
+		$network = $info->network ? $info->network->name : "";
+		$country = $info->network ? $info->network->country->code : "";
 		if ($airtime) {
 			$airtime = preg_split("/:/", $airtime);
 			$airtime = 60*(60*$airtime[0]+$airtime[1]);
 		} else {
 			$airtime = 0;
 		}
-		$timezone= $info->network->country->timezone;
+		$timezone= $info->network ? $info->network->country->timezone : "";
 		$timezoneid = query("SELECT * FROM timezones WHERE n_timezone = '".$timezone."'")->fetch_object();
 		if (!$timezoneid) {
 			query("INSERT INTO timezones (n_timezone) VALUES ('".$timezone."')");
